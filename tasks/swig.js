@@ -26,28 +26,29 @@ module.exports = function(grunt) {
     } catch (err) {
       globalVars = grunt.util._.clone(config.data);
     }
+    this.files.forEach(function(file) {
+      var src_path = file.src[0];
+      var dest_path = file.dest;
 
-    this.filesSrc.forEach(function(file) {
-      if (!grunt.file.exists(file)) {
-        grunt.log.warn('Source file "' + file.src + '" not found.');
+      if (!grunt.file.exists(src_path)) {
+        grunt.log.warn('Source file "' + src_path + '" not found.');
 
         return false;
       } else {
-        var dirName = path.dirname(file).split('/'),
-            destPath = dirName.splice(1, dirName.length).join('/'),
-            outputFile = path.basename(file, '.swig'),
-            htmlFile = config.data.dest + '/' + destPath + '/' + outputFile + '.html',
+        var destPath = path.dirname(dest_path),
+            outputFile = path.basename(src_path, path.extname(src_path)),
+            htmlFile = destPath + '/' + outputFile + '.html',
             tplVars = {},
             contextVars = {};
 
         try {
-          tplVars = grunt.file.readJSON(path.dirname(file) + '/' + outputFile + ".json");
+          tplVars = grunt.file.readJSON(path.dirname(src_path) + '/' + outputFile + ".json");
         } catch(err) {
           tplVars = {};
         }
 
         try {
-          contextVars = grunt.file.readJSON(path.dirname(file) + '/' + outputFile + "." + context + ".json");
+          contextVars = grunt.file.readJSON(path.dirname(src_path) + '/' + outputFile + "." + context + ".json");
         } catch(err) {
           contextVars = {};
         }
@@ -60,7 +61,7 @@ module.exports = function(grunt) {
 
         grunt.log.writeln('Writing HTML to ' + htmlFile);
 
-        grunt.file.write(htmlFile, swig.renderFile(file, grunt.util._.extend(globalVars, tplVars, contextVars)));
+        grunt.file.write(htmlFile, swig.renderFile(src_path, grunt.util._.extend(globalVars, tplVars, contextVars)));
 
         if (config.data.sitemap_priorities !== undefined && config.data.sitemap_priorities[destPath + '/' + outputFile + '.html'] !== undefined) {
           pages.push({
